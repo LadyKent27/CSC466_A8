@@ -101,23 +101,103 @@ command
         strcat( $$.str, "i++;\n}\n" );
         }
     ;
+
+subexp
+    : variable
+    | subexp '+' variable
+        {
+        if($1.ttype == 10 && $3.ttype == 10)
+                {
+                strcpy( $$.str, $1.str );
+                strcat( $$.str, " + " );
+                strcat( $$.str, $3.str );
+                }
+	else if($1.ttype == 10 && gettype($3.str) == 10)
+		{
+		strcpy($$.str, $1.str);
+		strcat($$.str, " + " );
+		strcat($$.str, $3.str);
+		}
+	else
+		{
+		yyerror("Incompatible data types");
+		}
+        }
+    | subexp '-' variable
+	{
+	if($1.ttype == 10 && $3.ttype == 10)
+	        {
+	        strcpy( $$.str, $1.str );
+	        strcat( $$.str, " - " );
+        	strcat( $$.str, $3.str );
+	        }
+	else if($1.ttype == 10 && gettype($3.str) == 10)
+		{
+		strcpy( $$.str, $1.str );
+		strcat( $$.str, " - " );
+		strcat( $$.str, $3.str );
+		}
+	else
+		{
+		yyerror("Incompatible data types");
+		}
+	}
+    | subexp '*' variable
+	{
+	if($1.ttype == 10 && $3.ttype == 10)
+        	{
+	        strcpy( $$.str, $1.str );
+        	strcat( $$.str, " * " );
+	        strcat( $$.str, $3.str );
+        	}
+	else if($1.ttype == 10 && gettype($3.str) == 10)
+		{
+		strcpy( $$.str, $1.str );
+		strcat( $$.str, " * " );
+		strcat( $$.str, $3.str );
+		}	
+	else
+		{
+		yyerror("Incompatible data types");
+		}
+	}
+    | subexp '/' variable
+	{
+	if($1.ttype == 10 && $3.ttype == 10)
+	        {
+        	strcpy( $$.str, $1.str );
+	        strcat( $$.str, " / " );
+        	strcat( $$.str, $3.str );
+	        }
+	else if($1.ttype == 10 && gettype($3.str) == 10)
+		{
+		strcpy( $$.str, $1.str );
+		strcat( $$.str, " / " );
+		strcat( $$.str, $3.str );
+		}
+	else
+		{
+		yyerror("Incompatible data types");
+		}
+	}
+    ;
+
+
+
+
 declaration
     : tint variable                            
 	{
 		if(intab($2.str))
 		{
-		strcpy( $$.str, "printf(\"Variable ");
-		strcat( $$.str, $2.str);
-		strcat( $$.str, " has already been declared.\" ");
-		strcat( $$.str, ");\n" );
-		yyerror( $$.str);
+		yyerror("Duplicate declaration");
 	        }
 		else
 		{
         	strcpy( $$.str, "int " );
 	        strcat( $$.str, $2.str );
         	strcat( $$.str, ";\n" );
-		addtab($2.str, $$.ttype);
+		addtab($2.str, 10);
 		
 	        }
 	}
@@ -125,11 +205,7 @@ declaration
 	{
 		if(intab($2.str))
 		{
-		strcpy( $$.str, "printf(\"Variable ");
-		strcat( $$.str, $2.str);
-		strcat( $$.str, " has already been declared.\" ");
-		strcat( $$.str, ");\n" );
-		yyerror( $$.str);
+		yyerror("Duplicate declaration");
 		}
 	        else
 		{
@@ -143,14 +219,14 @@ declaration
         {
 		if(intab($1.str))
 		{
-	        	if ( $3.ttype == 10 )
+	        	if ( gettype($1.str) == 10 && $3.ttype == 10)
                 	{
 	        	strcpy( $$.str, $1.str );
         	        strcat( $$.str, " = " );
                 	strcat( $$.str, $3.str );
 	                strcat( $$.str, ";\n" );
         	        }
-		        if ( $3.ttype == 20 )
+		        else if ( gettype($1.str) == 20 && $3.ttype == 20 )
                 	{
 	                strcpy( $$.str, "strcpy(");
         	        strcat( $$.str, $1.str );
@@ -158,10 +234,14 @@ declaration
 	                strcat( $$.str, $3.str );
         	        strcat( $$.str, ");\n" );
                 	}
+			else
+			{
+			yyerror("Incompatible data types");
+			}
 	        }
 		else
 		{
-	                if ( $3.ttype == 10 )
+	                if ( $1.ttype == 10 &&  $3.ttype == 10 )
         	        {
 			strcpy( $$.str, "int ");
 	                strcat( $$.str, $1.str );
@@ -169,15 +249,18 @@ declaration
  	                strcat( $$.str, $3.str );
         	        strcat( $$.str, ";\n" );
                 	}
-	                if ( $3.ttype == 20 )
+			else if ( $1.ttype == 20 && $3.ttype == 20 )
         	        {
                 	strcpy( $$.str, "strcpy(");
 	                strcat( $$.str, $1.str );
         	        strcat( $$.str, ", ");
                 	strcat( $$.str, $3.str );
 	                strcat( $$.str, ");\n" );
-			addtab( $1.str, 20);
         	        }
+			else
+			{
+			yyerror("Incompatible data types");
+			}
 
 		}
 	}
@@ -185,48 +268,27 @@ declaration
 	{
 		if(intab($2.str))	
 	        {
-        	strcpy( $$.str, $2.str );
-        	strcat( $$.str, " = " );
-	        strcat( $$.str, $4.str );
-        	strcat( $$.str, ";\n" );
-	        }
-		else
-		{
-		strcpy( $$.str, "int ");
-		strcat( $$.str, $2.str);
-		strcat( $$.str, " = " );
-		strcat( $$.str, $4.str);
-		strcat( $$.str, ";\n" );
-		addtab( $2.str, $$.ttype);
+			if( gettype($2.str) == 10 && $4.ttype == 10)
+			{
+	        	strcpy( $$.str, $2.str );
+        		strcat( $$.str, " = " );
+	        	strcat( $$.str, $4.str );
+	        	strcat( $$.str, ";\n" );
+		        }
+			else if( gettype($2.str) == 20 && $4.ttype == 20)
+			{
+			strcpy( $$.str, "strcpy(");
+			strcat( $$.str, $2.str );
+			strcat( $$.str, ", " );
+			strcat( $$.str, $4.str );
+			strcat( $$.str, ");\n" );
+			}
+			else
+			{
+			yyerror("Incompatible data types");
+			}
 		}
 	}
-    ;
-subexp
-    : variable
-    | subexp '+' variable
-        {
-        strcpy( $$.str, $1.str );
-        strcat( $$.str, " + " );
-        strcat( $$.str, $3.str );
-        }
-    | subexp '-' variable
-        {
-        strcpy( $$.str, $1.str );
-        strcat( $$.str, " - " );
-        strcat( $$.str, $3.str );
-        }
-    | subexp '*' variable
-        {
-        strcpy( $$.str, $1.str );
-        strcat( $$.str, " * " );
-        strcat( $$.str, $3.str );
-        }
-    | subexp '/' variable
-        {
-        strcpy( $$.str, $1.str );
-        strcat( $$.str, " / " );
-        strcat( $$.str, $3.str );
-        }
     ;
 op
     : tset
