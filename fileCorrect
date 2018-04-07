@@ -1,0 +1,13 @@
+vari x
+vari y
+vars g
+vars f
+vars c
+x = 12 + 3
+set y to 40 + x
+g = "Hello"
+set f to " World"
+printi x
+printi y
+printsh g
+printsv f
